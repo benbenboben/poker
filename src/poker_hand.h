@@ -23,7 +23,6 @@ public:
     void score_hand(const std::vector<Card>& sub_hand);
     void score_hand();
 private:
-    void generate_all_hands(const int& offset, const int& size, std::vector<Card>& tmp, std::vector<std::vector<Card>>& all_hands) const;
     static const int MAX_HAND_ = 7;
     static const int SCORE_SIZE_ = 5;
     int hand_score_;
@@ -35,8 +34,8 @@ private:
     static bool is_royal_flush(const std::vector<Card>& sub_hand);
     static bool is_straight_flush(const std::vector<Card>& sub_hand);
     static bool has_ace(const std::vector<Card>& sub_hand);
-    static bool has_four_of_a_kind(const std::vector<Card>& sub_hand);
-
+    static int has_x_of_a_kind(const int& x, const std::vector<Card>& sub_hand);
+    static std::pair<int, int> has_x_y_of_a_kind(const int& x, const int& y, const std::vector<Card>& sub_hand);
 };
 
 #endif /* poker_hand_h */

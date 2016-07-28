@@ -9,7 +9,9 @@
 #include "poker_hand.h"
 #include "misc.h"
 
-enum class HANDS {HIGH, PAIR, TWO_PAIR, THREE_OF_A_KIND, STRAIGHT, FLUSH, FULL_HOUSE, FOUR_OF_A_KIND, STRAIGHT_FLUSH, ROYAL_FLUSH};
+const std::vector<std::string> HANDS_ = {"HIGH", "PAIR", "TWO_PAIR", "THREE_OF_A_KIND",
+                                         "STRAIGHT", "FLUSH", "FULL_HOUSE", "FOUR_OF_A_KIND",
+                                         "STRAIGHT_FLUSH", "ROYAL_FLUSH"};
 
 PokerHand::PokerHand() : Deck(false) {
     
@@ -19,19 +21,6 @@ PokerHand::PokerHand(const std::vector<Card>& cards) {
     deck_ = cards;
 }
 
-/*
-void PokerHand::generate_all_hands(const int& offset, const int& k, std::vector<Card>& tmp, std::vector<std::vector<Card>>& all_hands) const {
-    if(k == 0) {
-        all_hands.push_back(tmp);
-        return;
-    }
-    for(int i = offset; i <= MAX_HAND_ - k; ++i) {
-        tmp.push_back(deck_[i]);
-        generate_all_hands(i + 1, k - 1, tmp, all_hands);
-        tmp.pop_back();
-    }
-}
-*/
 void PokerHand::print_all_hands() {
     std::vector<std::vector<Card>> all_hands = combinations(deck_, SCORE_SIZE_);
     std::cout << all_hands.size() << std::endl;
@@ -82,30 +71,51 @@ void PokerHand::score_hand(const std::vector<Card>& sub_hand) {
 }
 
 bool PokerHand::is_royal_flush(const std::vector<Card>& sub_hand) {
-    if(is_straight_flush(sub_hand) && sub_hand[0].get_rank() > 0) return true;
-    return false;
+    //if(is_straight_flush(sub_hand) && sub_hand[0].get_rank() > 0) return true;
+    return is_straight_flush(sub_hand) && sub_hand[0].get_rank() > 0;
+    //return false;
 }
 
 bool PokerHand::is_straight_flush(const std::vector<Card>& sub_hand) {
-    if(is_straight(sub_hand) && is_flush(sub_hand)) return true;
-    return false;
+    //if(is_straight(sub_hand) && is_flush(sub_hand)) return true;
+    return is_straight(sub_hand) && is_flush(sub_hand);
+    //return false;
 }
 
-bool PokerHand::has_four_of_a_kind(const std::vector<Card>& sub_hand) {
-    std::vector<std::vector<Card>> groups_of_four = combinations(sub_hand, 4);
-    for(const std::vector<Card>& h: groups_of_four) {
-        int rank = h[0].get_rank();
+int PokerHand::has_x_of_a_kind(const int& x, const std::vector<Card>& sub_hand) {
+    std::vector<std::vector<Card>> groups_of_x = combinations(sub_hand, x);
+    for(const std::vector<Card>& x_hand: groups_of_x) {
+        int rank = x_hand[0].get_rank();
         bool has_it = true;
-        for(const Card& c: h) {
+        for(const Card& c: x_hand) {
             if(c.get_rank() != rank) {
                 has_it = false;
                 break;
             }
         }
         if(has_it) {
-            //special_value_1_ = rank;
-            return true;
+            return rank;
         }
     }
-    return false;
+    return -1;
+}
+
+std::pair<int, int> PokerHand::has_x_y_of_a_kind(const int& x, const int& y, const std::vector<Card>& sub_hand) {
+    std::pair<int, int> result (-1, -1);
+    std::vector<std::vector<Card>> groups_of_x = combinations(sub_hand, x);
+    for(const std::vector<Card>& x_hand: groups_of_x) {
+        std::vector<Card> y_hand;
+        for(const Card& card: sub_hand) {
+            if(std::find(std::begin(x_hand), std::end(x_hand), card) == std::end(sub_hand)) y_hand.push_back(card);
+        }
+        if(x_hand.size() + y_hand.size() != sub_hand.size()) std::cout << "ERROR" << std::endl;
+        int x_hand_result = has_x_of_a_kind(x, x_hand);
+        int y_hand_result = has_x_of_a_kind(y, y_hand);
+        if(x_hand_result >= 0 && y_hand_result >= 0) {
+            result.first = x_hand_result;
+            result.second = y_hand_result;
+            return result;
+        }
+    }
+    return result;
 }
