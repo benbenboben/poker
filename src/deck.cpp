@@ -15,9 +15,9 @@
 #include "deck.h"
 #include "card.h"
 
-const std::vector<std::string> Deck::SUITS_ = {"s"};//, "c", "h", "d"};
+const std::vector<std::string> Deck::SUITS_ = {"s", "c", "h", "d"};
 const std::vector<std::string> Deck::RANKS_ = {"2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"};
-const unsigned Deck::SEED_ = std::chrono::system_clock::now().time_since_epoch().count();
+//const unsigned Deck::SEED_ = std::chrono::system_clock::now().time_since_epoch().count();
 
 Deck::Deck() {
     
@@ -33,10 +33,13 @@ Deck::Deck(const bool& fill) {
             }
         }
     }
+    rand_eng_.seed(time(0));
+    //rand_eng_.seed(SEED_);
 }
 
 Deck::~Deck() {
-    
+    rand_eng_.seed(time(0));
+    //rand_eng_.seed(SEED_);
 }
 
 void Deck::sort() {
@@ -49,7 +52,9 @@ void Deck::shuffle() {
     //    unsigned int j = std::rand() % deck_.size();
     //    std::swap(deck_[i], deck_[j]);
     //}
-    std::shuffle(std::begin(deck_), std::end(deck_), std::default_random_engine(SEED_));
+    std::shuffle(std::begin(deck_), std::end(deck_), rand_eng_);
+    //std::shuffle(std::begin(deck_), std::end(deck_), std::default_random_engine());
+    //std::shuffle(std::begin(deck_), std::end(deck_), std::default_random_engine(SEED_));
 }
 
 Card Deck::draw_delete_back() {
@@ -92,7 +97,7 @@ void Deck::show() const {
     std::cout << std::endl;
 }
 
-std::string Deck::display_card(const Card& c) const {
+std::string Deck::display_card(const Card& c) {
     std::string card = RANKS_[c.get_rank()] + SUITS_[c.get_suit()];
     return card;
 }

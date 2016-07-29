@@ -27,13 +27,14 @@ int main(int argc, const char * argv[]) {
     //endwin();			/* End curses mode		  */
     //return 0;
     
-    Deck deck(true);
+    //Deck deck(true);
     //std::cout << "original deck" << std::endl;
     //deck.show();
     //deck.shuffle();
     //std::cout << "shuffled deck" << std::endl;
     //deck.show();
-    
+
+    /*
     PokerHand hand_1;
     for(int i = 0; i < 5; i++) hand_1.add_back(deck.draw_delete_back());
     std::cout << "hand" << std::endl;
@@ -64,5 +65,27 @@ int main(int argc, const char * argv[]) {
     hand_3.sort();
     hand_3.show();
     hand_3.score_hand();
+    */
+    Deck deck(true);
+    while(true) {
+        PokerHand hand;
+        deck.shuffle();
+        for(int i = 0; i < 5; i++) {
+            hand.add_back(deck.draw_delete_back());
+        }
+        //std::cout << deck.size() << std::endl;
+        //std::cout << hand.size() << std::endl;
+        hand.sort();
+        hand.show();
+        hand.score_hand();
+        std::cout << hand.show_score() << std::endl;
+        int tmp;
+        std::cout << "enter 1" << std::endl;
+        std::cin >> tmp;
+        for(int i = 0; i < 5; i++) {
+            deck.add_back(hand.draw_delete_back());
+        }
+    }
+
     return 0;
 }

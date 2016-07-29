@@ -1,5 +1,5 @@
 //
-//  deck.hpp
+//  deck.h
 //  poker
 //
 //  Created by Ben Ellis on 7/15/16.
@@ -31,13 +31,14 @@ public:
     void add_front(const Card& c);
     bool find(const Card& c) const;
     void show() const;
-    std::string display_card(const Card& c) const;
+    static std::string display_card(const Card& c);
     long size() const;
 protected:
     std::vector<Card> deck_;
-    static const unsigned SEED_;
+    //static const unsigned SEED_;
     static const std::vector<std::string> SUITS_;
     static const std::vector<std::string> RANKS_;
+    std::default_random_engine rand_eng_;
 };
 
 

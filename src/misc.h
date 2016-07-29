@@ -1,5 +1,5 @@
 //
-//  misc.hpp
+//  misc.h
 //  poker
 //
 //  Created by Ben Ellis on 7/19/16.
