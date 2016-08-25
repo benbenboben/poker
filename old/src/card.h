@@ -10,6 +10,8 @@
 #define card_h
 
 #include <iostream>
+#include <vector>
+#include <string>
 
 class Card {
 public:
@@ -27,7 +29,6 @@ public:
     bool operator==(const Card& rhs) const;
     bool operator!=(const Card& rhs) const;
     void operator=(const Card& rhs);
-    void show() const;
     std::string str() const;
     std::string get_str_suit() const;
     std::string get_str_rank() const;

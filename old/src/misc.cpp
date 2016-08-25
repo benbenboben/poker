@@ -1,12 +1,12 @@
 //
 //  misc.cpp
-//  poker_calculator
+//  poker
 //
 //  Created by Ben Ellis on 7/19/16.
 //  Copyright © 2016 Ben Ellis. All rights reserved.
 //
 
-#include "misc.hpp"
+#include "misc.h"
 
 /*
 template <typename T>

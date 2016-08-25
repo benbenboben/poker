@@ -8,7 +8,7 @@
 
 #include <algorithm>
 
-#include "card.hpp"
+#include "card.h"
 
 
 Card::Card() {

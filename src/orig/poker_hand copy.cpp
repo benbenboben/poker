@@ -7,7 +7,6 @@
 //
 
 #include <algorithm>
-#include <memory>
 
 #include "poker_hand.hpp"
 #include "deck.hpp"
@@ -24,15 +23,9 @@ PokerHand::PokerHand() : Deck(false) {
 
 };
 
-PokerHand::PokerHand(const std::vector<Card>& cards) : Deck(false) {
+PokerHand::PokerHand(const std::vector<Card>& cards) {
     deck_ = cards;
-    score_ = -1;
-    special_value_1_ = -1;
-    special_value_2_ = -1;
-}
-
-PokerHand::PokerHand(const std::vector<Card>&& cards) : Deck(false) {
-    deck_ = cards;
+    sort();
     score_ = -1;
     special_value_1_ = -1;
     special_value_2_ = -1;
@@ -50,161 +43,97 @@ void PokerHand::print_all_hands() {
     }
 }
 
-bool PokerHand::has_flush(const std::vector<int>& suits_count) {
-    for(const int& x: suits_count) {
-        if(x == 5) return true;
-    }
-    return false;
-}
-
-bool PokerHand::has_straight(const std::vector<int>& ranks_count) {
-    for(const int& i: ranks_count) if(i > 1) return false;
-    int diff = 5;
-    if(has_ace() && deck_[0].get_rank() == 0) diff = 4;
-    int start = std::find(std::begin(ranks_count), std::end(ranks_count), 1) - std::begin(ranks_count);
-    if(start > ranks_count.size() - diff) return false;
-    for(int i = 0; i < diff; ++i) {
-        if(ranks_count[start] != 1) return false;
-        start += 1;
+bool PokerHand::has_flush(const std::vector<Card>& cards) {
+    int suit = cards[0].get_suit();
+    for(const Card& c: cards) {
+        if(c.get_suit() != suit) return false;
     }
     return true;
 }
 
-void PokerHand::swap_ace_low() {
-    if(has_ace() && deck_[0].get_rank() == 0) {
+bool PokerHand::has_straight(const std::vector<Card>& cards) {
+    std::vector<Card>::const_iterator end_iter = std::end(cards);
+    if(has_ace(cards) && cards[0].get_rank() == 0) end_iter -= 1;
+    for(std::vector<Card>::const_iterator i = std::begin(cards); i != end_iter; i++) {
+        std::vector<Card>::const_iterator j = i + 1;
+        if(j == end_iter) break;
+        if((*j).get_rank() - (*i).get_rank() != 1) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void PokerHand::swap_ace_low(std::vector<Card>& cards) {
+    if(has_ace(cards) && cards[0].get_rank() == 0) {
         //Card ace = cards.back();
-        deck_.insert(std::begin(deck_), deck_.back());
-        deck_.pop_back();
+        cards.insert(std::begin(cards), cards.back());
+        cards.pop_back();
     }
 }
 
-bool PokerHand::has_ace() {
-    for(const Card& c: deck_) {
+bool PokerHand::has_ace(const std::vector<Card>& cards) {
+    for(const Card& c: cards) {
         if(c.get_rank() == RANKS_.size() - 1) return true;
     }
     return false;
 }
 
-int PokerHand::has_pairs(const std::vector<int>& ranks_count) {
-    int npairs = 0;
-    std::vector<int> vals;
-    for(int i = 0; i < ranks_count.size(); ++i) {
-        if(ranks_count[i] == 2) {
-            ++npairs;
-            vals.push_back(i);
-        }
-    }
-    if(vals.size() == 1) special_value_1_ = vals[0];
-    else if(vals.size() == 2) {
-        special_value_1_ = *std::max_element(std::begin(vals), std::end(vals));
-        special_value_2_ = *std::min_element(std::begin(vals), std::end(vals));
-    }
-    return npairs;
-}
-
-bool PokerHand::has_three_kind(const std::vector<int>& ranks_count) {
-    int pos = std::find(std::begin(ranks_count), std::end(ranks_count), 3) - std::begin(ranks_count);
-    if(pos < ranks_count.size()) {
-        special_value_1_ = pos;
-        return true;
-    }
-    return false;
-}
-
-bool PokerHand::has_four_kind(const std::vector<int>& ranks_count) {
-    int pos = std::find(std::begin(ranks_count), std::end(ranks_count), 4) - std::begin(ranks_count);
-    if(pos < ranks_count.size()) {
-        special_value_1_ = pos;
-        return true;
-    }
-    return false;
-}
-
-bool PokerHand::has_full_house(const std::vector<int>& ranks_count) {
-    int pos_3 = std::find(std::begin(ranks_count), std::end(ranks_count), 3) - std::begin(ranks_count);
-    if(pos_3 >= ranks_count.size()) return false;
-    int pos_2 = std::find(std::begin(ranks_count), std::end(ranks_count), 2) - std::begin(ranks_count);
-    if(pos_2 >= ranks_count.size()) return false;
-    special_value_1_ = pos_3;
-    special_value_2_ = pos_2;
-    return true;
-}
-
 void PokerHand::score_hand() {
     if(score_ < 0) {
         sort();
-        std::vector<int> ranks_count (RANKS_.size(), 0);
-        std::vector<int> suits_count (SUITS_.size(), 0);
-        enumerate(ranks_count, suits_count);
-        bool flush = has_flush(suits_count);
-        bool straight = has_straight(ranks_count);
-        
-        //int pairs = has_pairs(ranks_count);
-        //bool three_kind = has_three_kind(ranks_count);
-        //bool four_kind = has_four_kind(ranks_count);
-        if(flush && straight && deck_[0].get_rank() > 0) {
+        if(has_royal_flush(deck_)) {
             if(set_hand_score("ROYAL FLUSH")) return;
-            else {
-                std::cout << "ERROR SETTING ROYAL FLUSH" << std::endl;
-                std::exit(0);
-            }
-        } else if(flush && straight) {
-            swap_ace_low();
-            if(set_hand_score("STRAIGHT FLUSH")) return;
-            else {
-                std::cout << "ERROR SETTING STRAIGHT FLUSH" << std::endl;
-                std::exit(0);
-            }
-        } else if(has_four_kind(ranks_count)) {
-            if(set_hand_score("FOUR OF A KIND")) return;
-            else {
-                std::cout << "ERROR SETTING FOUR OF A KIND" << std::endl;
-                std::exit(0);
-            }
-        } else if(has_full_house(ranks_count)) {
-            if(set_hand_score("FULL HOUSE")) return;
-            else {
-                std::cout << "ERROR SETTING FULL HOUSE" << std::endl;
-                std::exit(0);
-            }
-        } else if(flush) {
-            if(set_hand_score("FLUSH")) return;
-            else {
-                std::cout << "ERROR SETTING FLUSH" << std::endl;
-                std::exit(0);
-            }
-        } else if(straight) {
-            swap_ace_low();
-            if(set_hand_score("STRAIGHT")) return;
-            else {
-                std::cout << "ERROR SETTING STRAIGHT" << std::endl;
-                std::exit(0);
-            }
-        } else if(has_three_kind(ranks_count)) {
-            if(set_hand_score("THREE OF A KIND")) return;
-            else {
-                std::cout << "ERROR SETTING THREE OF A KIND" << std::endl;
-                std::exit(0);
-            }
-        } else if(has_pairs(ranks_count) == 2) {
-            if(set_hand_score("TWO PAIR")) return;
-            else {
-                std::cout << "ERROR SETTING TWO PAIR" << std::endl;
-                std::exit(0);
-            }
-        } else if(has_pairs(ranks_count) == 1) {
-            if(set_hand_score("PAIR")) return;
-            else {
-                std::cout << "ERROR SETTING PAIR" << std::endl;
-                std::exit(0);
-            }
-        } else {
-            if(set_hand_score("HIGH")) return;
-            else {
-                std::cout << "ERROR SETTING HIGH" << std::endl;
-                std::exit(0);
-            }
+            std::cout << "error setting royal flush" << std::endl;
         }
+        if(has_straight_flush(deck_)) {
+            swap_ace_low(deck_);
+            if(set_hand_score("STRAIGHT FLUSH")) return;
+            std::cout << "error setting straight flush" << std::endl;
+        }
+        int four_kind_rank = has_x_of_a_kind(4, deck_);
+        if(four_kind_rank >= 0) {
+            special_value_1_ = four_kind_rank;
+            if(set_hand_score("FOUR OF A KIND")) return;
+            std::cout << "error setting four of a kind" << std::endl;
+        }
+        std::pair<int, int> full_house_ranks = has_x_y_of_a_kind(3, 2, deck_);
+        if(full_house_ranks.first >= 0 && full_house_ranks.second >= 0) {
+            special_value_1_ = full_house_ranks.first;
+            special_value_2_ = full_house_ranks.second;
+            if(set_hand_score("FULL HOUSE")) return;
+            std::cout << "error setting full house" << std::endl;
+        }
+        if(has_flush(deck_)) {
+            if(set_hand_score("FLUSH")) return;
+            std::cout << "error setting flush" << std::endl;
+        }
+        if(has_straight(deck_)) {
+            swap_ace_low(deck_);
+            if(set_hand_score("STRAIGHT")) return;
+            std::cout << "error setting straight" << std::endl;
+        }
+        int three_of_a_kind_rank = has_x_of_a_kind(3, deck_);
+        if(three_of_a_kind_rank >= 0) {
+            special_value_1_ = three_of_a_kind_rank;
+            if(set_hand_score("THREE OF A KIND")) return;
+            std::cout << "error setting three of a kind" << std::endl;
+        }
+        std::pair<int, int> two_pair_ranks = has_x_y_of_a_kind(2, 2, deck_);
+        if(two_pair_ranks.first >= 0 && two_pair_ranks.second >= 0) {
+            special_value_1_ = std::max(two_pair_ranks.first, two_pair_ranks.second);
+            special_value_2_ = std::min(two_pair_ranks.first, two_pair_ranks.second);
+            if(set_hand_score("TWO PAIR")) return;
+            std::cout << "error setting two pair" << std::endl;
+        }
+        int pair_rank = has_x_of_a_kind(2, deck_);
+        if(pair_rank >= 0) {
+            special_value_1_ = pair_rank;
+            if(set_hand_score("PAIR")) return;
+            std::cout << "error setting pair" << std::endl;
+        }
+        if(set_hand_score("HIGH")) return;
+        std::cout << "no hands set.  pretty fucked up." << std::endl;
     }
     std::cout << "hand is already scored!" << std::endl;
 }
@@ -224,19 +153,14 @@ bool PokerHand::set_hand_score(const std::string& hand) {
     return false;
 }
 
-/*
 bool PokerHand::has_royal_flush(const std::vector<Card>& cards) {
     return has_straight_flush(cards) && cards[0].get_rank() > 0 && has_ace(cards);
 }
-*/
 
-/*
 bool PokerHand::has_straight_flush(const std::vector<Card>& cards) {
     return has_straight(cards) && has_flush(cards);
 }
-*/
 
-/*
 int PokerHand::has_x_of_a_kind(const int& x,const std::vector<Card>& cards) {
     std::vector<std::vector<Card>> groups_of_x = combinations(cards, x);
     for(const std::vector<Card>& x_hand: groups_of_x) {
@@ -254,9 +178,7 @@ int PokerHand::has_x_of_a_kind(const int& x,const std::vector<Card>& cards) {
     }
     return -1;
 }
-*/
 
-/*
 std::pair<int, int> PokerHand::has_x_y_of_a_kind(const int& x, const int& y, const std::vector<Card>& cards) {
     std::pair<int, int> result (-1, -1);
     std::vector<std::vector<Card>> groups_of_x = combinations(cards, x);
@@ -275,7 +197,6 @@ std::pair<int, int> PokerHand::has_x_y_of_a_kind(const int& x, const int& y, con
     }
     return result;
 }
-*/
 
 bool PokerHand::operator>(const PokerHand& other) {
     if(score_ > other.score_) return true;
@@ -385,17 +306,11 @@ bool PokerHand::operator<(const PokerHand &other) {
     return !(*this > other);
 }
 
+/*
+ * this is pretty lazy...
+ */
 bool PokerHand::operator==(const PokerHand &other) {
-    //return !(*this > other) && !(*this < other);
-    if(score_ != other.score_) return false;
-    for(int i = 0; i < deck_.size(); ++i) {
-        if(deck_[i] != other.deck_[i]) return false;
-    }
-    return true;
-}
-                  
-bool PokerHand::operator!=(const PokerHand& other) {
-    return !(*this == other);
+    return !(*this > other) && !(*this < other);
 }
 
 bool PokerHand::operator<=(const PokerHand &other) {
@@ -406,14 +321,13 @@ bool PokerHand::operator>=(const PokerHand &other) {
     return *this > other || *this == other;
 }
 
-void PokerHand::enumerate(std::vector<int>& ranks, std::vector<int>& suits) {
-    //std::vector<int> ranks (RANKS_.size(), 0);
-    //std::vector<int> suits (SUITS_.size(), 0);
+void PokerHand::enumerate() {
+    std::vector<int> ranks (RANKS_.size(), 0);
+    std::vector<int> suits (SUITS_.size(), 0);
     for(const Card& c: deck_) {
         ranks[c.get_rank()] += 1;
         suits[c.get_suit()] += 1;
     }
 }
-
 
 

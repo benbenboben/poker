@@ -1,6 +1,6 @@
 //
 //  deck.cpp
-//  poker_calculator
+//  poker
 //
 //  Created by Ben Ellis on 7/15/16.
 //  Copyright © 2016 Ben Ellis. All rights reserved.
@@ -11,8 +11,8 @@
 #include <random>
 #include <ctime>
 
-#include "deck.hpp"
-#include "card.hpp"
+#include "deck.h"
+#include "card.h"
 
 const std::vector<std::string> Deck::SUITS_ = {"s", "c", "h", "d"};
 const std::vector<std::string> Deck::RANKS_ = {"2", "3", "4", "5", "6", "7", "8", "9", "T", "J", "Q", "K", "A"};
